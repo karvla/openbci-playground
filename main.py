@@ -3,59 +3,41 @@
 
 from time import sleep, time
 from threading import Thread
-
 import numpy as np
 import matplotlib.pyplot as plt
+import reader
 
-from pyOpenBCI import OpenBCIGanglion
 
 VOLTS_PER_COUNT = 1.2 * 8388607.0 * 1.5 * 51.0
 SAMPLE_POINTS = 200
 
 # TODO: Move to class
-timings = []
-samples = []
 
-
-def reader(sample):
-    #print(sample)
-    volts = sample.channels_data / VOLTS_PER_COUNT
-    timings.append(time())
-    samples.append(volts[0])
-    #print(volts)
-    #print(len(data))
-
-
-def plot():
-    if len(timings) > SAMPLE_POINTS:
-        plt.axis([0, 200, -0.01, 0.01])
-        s = np.array(samples)
-        #print(s)
-        #print(s.shape)
+def plot(x, y):
+    if len(x) > SAMPLE_POINTS:
+        plt.axis([0, 100, -0.01, 0.01])
+        padding = [0] * 32
+        s = np.array(padding + x + padding)
         s = s[-SAMPLE_POINTS:]
         sp = np.fft.fft(s, axis=0)
-        timestep = timings[-1] - timings[-2]   # should be ~200Hz
+        timestep = y[-1] - y[-2]   # should be ~200Hz
         print(timestep)
         freq = np.fft.fftfreq(s.shape[0], timestep)
         i = freq > 0  # get positive half of frequencies
-        #print(timings)
         plt.plot(freq[i], sp.real[i])
-        plt.pause(0.01)
+        #plt.pause(0.01)
         plt.cla()  # clear axes
-        #plt.show()
-        #print('pltd')
 
 
 def main():
-    print("Connecting...")
-    board = OpenBCIGanglion(mac='ff:ce:cf:9f:7d:74')
-    print("Connected!")
-    t = Thread(target=board.start_stream, args=(reader,), daemon=True)
-    t.start()
+    r = reader.Reader('C4:A9:D2:20:3F:A1')
+    r.start()
+    task = loop.create_task(r.get_samples)
 
     while True:
-        plot()
-        sleep(0.01)
+        x = r.samples
+        y = r.timings
+        plot(x, y)
 
 
 if __name__ == "__main__":
