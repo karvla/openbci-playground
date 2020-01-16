@@ -1,44 +1,58 @@
-# from openbci import ganglion as bci
-# print(dir(bci))
-
 from time import sleep, time
-from threading import Thread
 import numpy as np
-import matplotlib.pyplot as plt
-import reader
+from reader import Reader
+from plotter import Plotter
+from scipy import signal
+from scipy.integrate import simps
 
+VOLTS_PER_COUNT = (4500000)/24/(2**23-1)
+#VOLTS_PER_COUNT = 1.2 * 8388607.0 * 1.5 * 51.0
+sf = 200
+h = 1/sf
+t_len = 500
+t = np.arange(t_len)/h
 
-VOLTS_PER_COUNT = 1.2 * 8388607.0 * 1.5 * 51.0
-SAMPLE_POINTS = 200
+def periodogram(u, t):
+    """ Returns the power spectral density for different
+        frequencies using welch method. """
+    win = 4*sf
+    freqs, psd = signal.welch(u, sf, nperseg=win)
+    return freqs, psd
 
-# TODO: Move to class
+def pad(u, n=256):
+    zeros = np.zeros(256)
+    return np.concatenate((zeros, u, zeros), axis=0)
 
-def plot(x, y):
-    if len(x) > SAMPLE_POINTS:
-        plt.axis([0, 100, -0.01, 0.01])
-        padding = [0] * 32
-        s = np.array(padding + x + padding)
-        s = s[-SAMPLE_POINTS:]
-        sp = np.fft.fft(s, axis=0)
-        timestep = y[-1] - y[-2]   # should be ~200Hz
-        print(timestep)
-        freq = np.fft.fftfreq(s.shape[0], timestep)
-        i = freq > 0  # get positive half of frequencies
-        plt.plot(freq[i], sp.real[i])
-        #plt.pause(0.01)
-        plt.cla()  # clear axes
+def realative_power(a, b, freqs, psd):
+    """
+    Computes the relative power of the signal between a hz and b hz.
+    """
+    dx = freqs[1] = freqs[0]
+    index = np.logical_and(freqs >= a, freqs <=b)
+    ab_power = simps(psd[index], dx=dx)
+    total_power = simps(psd, dx=dx)
+    return ab_power / total_power
+    
 
 
 def main():
-    r = reader.Reader('C4:A9:D2:20:3F:A1')
+    r = Reader('C4:A9:D2:20:3F:A1')
     r.start()
-    task = loop.create_task(r.get_samples)
+    plot = Plotter()
+    
+    while len(r.channels[0]) < t_len:
+        sleep(0.1)
 
     while True:
-        x = r.samples
-        y = r.timings
-        plot(x, y)
+        for n in range(4):
+            u = r.channels[n][-t_len:]
+            freqs, psd = welch_method(u, t)
+            plot.add(freqs, psd, n)
 
+            print(realative_power(4, 8, freqs, psd), " ", end='')
+        print()
+        plot.update_plot()
+        sleep(0.001)
 
 if __name__ == "__main__":
     main()
