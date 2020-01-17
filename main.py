@@ -9,10 +9,10 @@ sf = 200
 t_len = 2000
 t = np.arange(t_len) / sf
 
-def periodogram(u, t):
+def periodogram(u, t, n_win = 4):
     """ Returns the power spectral density for different
         frequencies using welch method. """
-    win = 4 * sf
+    win = int(t_len / n_win)
     freqs, psd = signal.welch(u, sf, nperseg=win)
     return freqs, psd
 
@@ -37,7 +37,7 @@ def main():
     r = Reader("C4:A9:D2:20:3F:A1")
     r.start()
     plot = Plotter()
-    [plot.set_properties(n, x_label = 'f', y_label = 'V^2/Hz') for n in range(4)]
+    [plot.set_properties(n, x_label = 'f', y_label = 'V^2/Hz', x_lim = (0, 60)) for n in range(4)]
 
     while len(r.channels[0]) < t_len:
         sleep(0.1)
