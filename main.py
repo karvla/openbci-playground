@@ -6,10 +6,8 @@ from scipy import signal
 from scipy.integrate import simps
 
 sf = 200
-h = 1 / sf
-t_len = 500
-t = np.arange(t_len) / h
-
+t_len = 2000
+t = np.arange(t_len) / sf
 
 def periodogram(u, t):
     """ Returns the power spectral density for different
@@ -39,6 +37,7 @@ def main():
     r = Reader("C4:A9:D2:20:3F:A1")
     r.start()
     plot = Plotter()
+    [plot.set_properties(n, x_label = 'f', y_label = 'V^2/Hz') for n in range(4)]
 
     while len(r.channels[0]) < t_len:
         sleep(0.1)
@@ -48,12 +47,13 @@ def main():
             u = r.channels[n][-t_len:]
             freqs, psd = periodogram(u, t)
             plot.add(freqs, psd, n)
+            #plot.add(t, u, n)
 
             rel_power = round(relative_power(4, 8, freqs, psd), 3) # Power in theta range.
             print(rel_power, " ", end="")
         print()
         plot.update_plot()
-        sleep(0.001)
+        sleep(0.01)
 
 
 if __name__ == "__main__":

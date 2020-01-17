@@ -16,7 +16,7 @@ class Reader(threading.Thread):
         self.board.start_stream(self.read)
 
     def read(self, sample):
-        volts = sample.channels_data * VOLTS_PER_COUNT
+        volts = sample.channels_data / VOLTS_PER_COUNT
         [self.channels[i].append(volts[i]) for i in range(4)]
 
 
