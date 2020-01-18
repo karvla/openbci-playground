@@ -1,5 +1,4 @@
 import threading
-from pyOpenBCI import OpenBCIGanglion
 from time import sleep, time
 import socket
 import json
@@ -15,6 +14,7 @@ class Reader(threading.Thread):
 
     def run(self):
         if self.interface == 'bt':
+            from pyOpenBCI import OpenBCIGanglion
             print("Connecting to bluetooth...")
             self.board = OpenBCIGanglion(mac=self.mac)
             print("Connected!")
