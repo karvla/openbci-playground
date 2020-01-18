@@ -24,7 +24,7 @@ class Plotter():
     def update_plot(self):
         for n in range(4):
             prop = self.propeties[n]
-            self.axs[n].plot(self.x[n], self.y[n])
+            self.axs[n].semilogy(self.x[n], self.y[n])
             self.axs[n].set_title(prop['title'])
             self.axs[n].set_xlabel(prop['x_label'])
             self.axs[n].set_ylabel(prop['y_label'])
