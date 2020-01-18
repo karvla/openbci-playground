@@ -37,7 +37,7 @@ def relative_power(a, b, freqs, psd):
 
 
 def main():
-    r = Reader("e0:06:15:36:28:44")
+    r = Reader(mac = "e0:06:15:36:28:44", interface = 'udp')
     r.start()
     plot = Plotter()
     [plot.set_properties(n, x_label = 'f', y_label = 'V^2/Hz', x_lim = (0, 50)) for n in range(4)]
