@@ -9,7 +9,8 @@ sf = 200
 t_len = 1000
 t = np.arange(t_len) / sf
 
-def periodogram(u, t, n_win = 4):
+
+def periodogram(u, t, n_win=4):
     """ Returns the power spectral density for different
         frequencies using welch method. """
     win = int(t_len / n_win)
@@ -36,11 +37,20 @@ def relative_power(a, b, freqs, psd):
     return ab_power / total_power
 
 
+def heartrate(u, t):
+    freqs, psd = periodogram(u, t, 2)
+    index_max = np.argmax(psd)
+    return freqs[index_max]
+
+
 def main():
-    r = Reader(mac = "e0:06:15:36:28:44", interface = 'udp')
+    r = Reader(mac="e0:06:15:36:28:44", interface="udp")
     r.start()
     plot = Plotter()
-    [plot.set_properties(n, x_label = 'f', y_label = 'V^2/Hz', x_lim = (0, 50)) for n in range(4)]
+    [
+        plot.set_properties(n, x_label="f", y_label="V^2/Hz", x_lim=(0, 50))
+        for n in range(4)
+    ]
 
     while len(r.channels[0]) < t_len:
         sleep(0.1)
@@ -50,10 +60,14 @@ def main():
             u = r.channels[n][-t_len:]
             freqs, psd = periodogram(u, t)
             plot.add(freqs, psd, n)
-            #plot.add(t, u, n)
+            # plot.add(t, u, n)
 
-            rel_power = round(relative_power(4, 8, freqs, psd), 3) # Power in theta range.
+            rel_power = round(
+                relative_power(4, 8, freqs, psd), 3
+            )  # Power in theta range.
             print(rel_power, " ", end="")
+            if n == 0:
+                print(heartrate(u, t), end="")
         print()
         plot.update_plot()
         sleep(0.2)
