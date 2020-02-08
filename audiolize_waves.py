@@ -17,24 +17,25 @@ def map_peaks(peaks):
 def audiolize():
 
     synth = Synth()
-    # r = Reader(mac="e0:06:15:36:28:44", interface="udp")
-    # r.start()
-    # t = np.arange(T_LEN) / SF
+    r = Reader(mac="e0:06:15:36:28:44", interface="udp")
+    r.start()
+    t = np.arange(T_LEN) / SF
 
-    # while len(r.channels[0]) < T_LEN:
-    #     sleep(0.1)
+    while len(r.channels[0]) < T_LEN:
+        sleep(0.1)
 
     synth.start()
     f = 880
     while True:
-        sleep(0.5)
-        f -= 100
-        synth.modulate(f)
+        u = r.channels[0][-T_LEN:]
+        freqs, psd = periodogram(u, t)
+        peaks, _ = zip(*freq_peaks(freqs, psd, n=3))
+        peaks = map_peaks(peaks)
+        sleep(1)
+        synth.play_freq(peaks[0])
+        sleep(1)
+        synth.play_freq(peaks[1])
 
-        # u = r.channels[0][-T_LEN:]
-        # freqs, psd = periodogram(u, t)
-        # peaks, _ = zip(*freq_peaks(freqs, psd, n=3))
-        # peaks = map_peaks(peaks)
 
         # waves = synth.sound_waves(peaks)
         # signal = synth.harmonize(waves)
