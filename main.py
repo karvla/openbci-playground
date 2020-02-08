@@ -14,8 +14,8 @@ def periodogram(u, t, n_win=4):
     """ Returns the power spectral density for different
         frequencies using welch method. """
     win = int(t_len / n_win)
-    freqs, psd = signal.welch(u, sf, nperseg=win)
-    return freqs, psd
+    freqs, power = signal.welch(u, sf, nperseg=win)
+    return freqs, power
 
 
 def pad(u, n=256):
@@ -34,7 +34,15 @@ def relative_power(a, b, freqs, psd):
 
     ab_power = simps(psd[index], dx=dx)
     total_power = simps(psd, dx=dx) - simps(psd[index_50_hz], dx=dx)
-    return ab_power / total_power
+    return round(ab_power / total_power, 3)
+
+def band_power(freqs, psd):
+    delta = relative_power(0.5, 3, freqs, psd)
+    theta = relative_power(3, 8, freqs, psd)
+    alpha = relative_power(8, 12, freqs, psd)
+    beta = relative_power(12, 38, freqs, psd)
+    gamma = relative_power(38, 42, freqs, psd)
+    return delta, theta, alpha, beta, gamma
 
 
 def heartrate(u, t):
