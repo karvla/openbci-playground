@@ -8,18 +8,19 @@ class Reader(threading.Thread):
     def __init__(self, **kwargs):
         super(Reader, self).__init__()
         self.channels = [[], [], [], []]
-        self.mac = kwargs.get('mac', None)
-        self.interface = kwargs.get('interface', 'bt')
-
+        self.mac = kwargs.get("mac", None)
+        self.interface = kwargs.get("interface", "bt")
 
     def run(self):
-        if self.interface == 'bt':
+        if self.interface == "bt":
             from pyOpenBCI import OpenBCIGanglion
+
             print("Connecting to bluetooth...")
             self.board = OpenBCIGanglion(mac=self.mac)
             print("Connected!")
             self.board.start_stream(self._read_bt)
-        elif self.interface == 'udp':
+        elif self.interface == "udp":
+            print("Connecting to udp...")
             UDP_IP = "127.0.0.1"
             UDP_PORT = 12345
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -31,19 +32,17 @@ class Reader(threading.Thread):
         return [values[n] / VOLTS_PER_COUNT for n in range(4)]
 
     def _read_udp(self, socket):
-            while True:
-                data, addr = socket.recvfrom(1024) # buffer size is 1024 bytes
-                data_dict = json.loads(data)
-                volts = self._values_to_volts(data_dict['data'])
-                self._add_samples(volts)
-
+        data, addr = socket.recvfrom(1024)  # buffer size is 1024 bytes
+        print("Connected!")
+        while True:
+            data, addr = socket.recvfrom(1024)  # buffer size is 1024 bytes
+            data_dict = json.loads(data)
+            volts = self._values_to_volts(data_dict["data"])
+            self._add_samples(volts)
 
     def _read_bt(self, sample):
-        volts = self._values_to_volt(sample.channels_data)
+        volts = self._values_to_volts(sample.channels_data)
         self._add_samples(volts)
-
 
     def _add_samples(self, samples):
         [self.channels[i].append(samples[i]) for i in range(4)]
-
-
