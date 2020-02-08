@@ -15,7 +15,7 @@ class Synth(Thread):
         self.has_changed = False
         self.duration = 100
         self.sf = 44100
-        self.fade_len = 10
+        self.fade_len = 44100
         self.atack = -10.0
         self.res = 4
         self.window_idx = 0
@@ -61,13 +61,13 @@ class Synth(Thread):
 
 
     def fade(self, signal):
+        # return signal
         t1 = np.arange(-self.fade_len/2, self.fade_len/2) / ((self.fade_len)/2)
-        a1 = 1 / (1 + np.exp(-1 * t1))
-        a2 = 1 / (1 + np.exp(1 * t1))
+        a1 = 1 / (1 + np.exp(-10 * t1))
+        a2 = 1 / (1 + np.exp(10 * t1))
 
         t2 = np.arange(-signal.shape[0]/2, signal.shape[0]/2) / ((signal.shape[0])/2)
-        signal = np.sin(2 * np.pi * 2 * t2)
-
+        
         signal[:self.fade_len] = a1 * signal[:self.fade_len]
 
         signal[-self.fade_len:] = a2 * signal[-self.fade_len:]
@@ -79,6 +79,10 @@ class Synth(Thread):
         t = np.arange(self.sf * self.duration) / self.sf
         wave = np.sin(2 * np.pi * freq * t)
         wave = self.fade(wave)
+
+        import matplotlib.pyplot as plt
+        plt.plot(wave[:8000])
+        plt.show()
 
         return wave.astype(np.float32)
 
@@ -99,7 +103,7 @@ class Synth(Thread):
         waves = list(map(sine, freqs))
         return np.array(waves)
 
-    def harmonize(self,waves):
+    def harmonize(self, waves):
         """ Returns a signal consisting of a sum of sine waves. """
         signal = list(reduce(lambda x, y : x + y, waves))
         signal = np.array(signal)
