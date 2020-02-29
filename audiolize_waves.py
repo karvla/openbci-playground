@@ -12,7 +12,7 @@ T_LEN = 1000
 
 def map_peaks(peaks):
     """ Maps peaks to be in an audible range """
-    return [20 + 30*peak for peak in peaks]
+    return [20 + 10*peak for peak in peaks]
 
 def audiolize():
 
@@ -21,6 +21,7 @@ def audiolize():
     r.start()
     t = np.arange(T_LEN) / SF
 
+    print("Waiting for data")
     while len(r.channels[0]) < T_LEN:
         sleep(0.1)
 
@@ -31,9 +32,9 @@ def audiolize():
         freqs, psd = periodogram(u, t)
         peaks, _ = zip(*freq_peaks(freqs, psd, n=3))
         peaks = map_peaks(peaks)
-        sleep(1)
+        sleep(5)
         synth.play_freq(peaks[0])
-        sleep(1)
+        sleep(5)
         synth.play_freq(peaks[1])
 
 

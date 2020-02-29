@@ -6,7 +6,8 @@ from functools import reduce
 from frequency_selection import freq_peaks
 
 from threading import Thread
-import scipy
+import scipy.io.wavfile
+
 
 class Synth(Thread):
 
@@ -37,11 +38,15 @@ class Synth(Thread):
 
     def _callback(self, in_data, frame_count, time_info, status):
         data = self.wave[frame_count * self.window_idx : frame_count * (self.window_idx + 1)]
+
         self.window_idx += 1
         return (data.tobytes(), pyaudio.paContinue)
 
     def play_freq(self, freq):
-        signal = self.convolve(self.fade(self._sound_wave(freq, 0.5)))
+        signal = self._sound_wave(freq, 0.5)
+        signal = self.convolve(signal)
+        signal = self.fade(signal)
+        signal = signal / np.max(np.abs(signal))
         frame_end = self.window_idx*(self.frame_count+1)# - self.fade_len
         signal_end = frame_end + signal.shape[0]
         self.wave[frame_end:signal_end] += signal
@@ -60,8 +65,10 @@ class Synth(Thread):
         return signal
 
     def convolve(self, signal):
-        impulse_resonse = scipy.io.wavfile.read('./1st_baptist_nashville_balcony.wav')
-        signal = np.convolve(impulse_resonse, signal)
+        _, impulse_resonse = scipy.io.wavfile.read('./samples/1st_baptist_nashville_balcony.wav')
+        impulse_resonse = impulse_resonse[:,0]
+        signal = np.convolve(signal, impulse_resonse)
+
         return signal
 
 
