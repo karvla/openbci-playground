@@ -5,6 +5,7 @@ from reader import Reader
 from main import periodogram
 from frequency_selection import freq_peaks
 from synthesizer import Synth
+import random
 
 SF = 200
 T_LEN = 1000
@@ -32,10 +33,8 @@ def audiolize():
         freqs, psd = periodogram(u, t)
         peaks, _ = zip(*freq_peaks(freqs, psd, n=3))
         peaks = map_peaks(peaks)
-        sleep(5)
-        synth.play_freq(peaks[0])
-        sleep(5)
-        synth.play_freq(peaks[1])
+        sleep(5*random.random())
+        synth.play_freq(peaks)
 
 
         # waves = synth.sound_waves(peaks)

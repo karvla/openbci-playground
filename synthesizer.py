@@ -39,11 +39,13 @@ class Synth(Thread):
     def _callback(self, in_data, frame_count, time_info, status):
         data = self.wave[frame_count * self.window_idx : frame_count * (self.window_idx + 1)]
 
+
         self.window_idx += 1
         return (data.tobytes(), pyaudio.paContinue)
 
-    def play_freq(self, freq):
-        signal = self._sound_wave(freq, 0.5)
+    def play_freq(self, freqs):
+        signals = self._sound_waves(freqs, 0.5)
+        signal = self.harmonize(signals)
         signal = self.convolve(signal)
         signal = self.fade(signal)
         signal = signal / np.max(np.abs(signal))
@@ -71,14 +73,6 @@ class Synth(Thread):
 
         return signal
 
-
-    def _sound_wave(self, freq, duration=None):
-        if not duration:
-            duration = self.duration
-        t = np.arange(self.sf * duration) / self.sf
-        wave = np.sin(2 * np.pi * freq * t)
-        return wave.astype(np.float32)
-
     def modulate(self, freq):
         self.mod_freq = True
         self.freq = freq
@@ -88,8 +82,18 @@ class Synth(Thread):
         while self.stream.is_active():
             sleep(0.1)
 
-    def sound_waves(self, freqs):
+    def _sound_wave(self, freq, duration=None):
+        if not duration:
+            duration = self.duration
+        t = np.arange(self.sf * duration) / self.sf
+        wave = np.sin(2 * np.pi * freq * t)
+        return wave.astype(np.float32)
+
+
+    def _sound_waves(self, freqs, duration=None):
         " Returns a numpy array with containing waves with different frequencies. "
+        if not duration:
+            duration = self.duration
         t = np.arange(self.sf * duration) / self.sf
         sine = lambda f : np.sin(2 * np.pi * f * t)
         waves = list(map(sine, freqs))
