@@ -43,8 +43,8 @@ class Synth(Thread):
         self.window_idx += 1
         return (data.tobytes(), pyaudio.paContinue)
 
-    def play_freq(self, freqs):
-        signals = self._sound_waves(freqs, 0.5)
+    def play_freq(self, freqs, duration=0.5):
+        signals = self._sound_waves(freqs, duration)
         signal = self.harmonize(signals)
         signal = self.convolve(signal)
         signal = self.fade(signal)
