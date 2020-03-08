@@ -7,7 +7,7 @@ def freq_peaks(freqs, power, n=1):
     peaks = list(filter(lambda x: abs(x[2]) < 0.05, zip(freqs, power, power_dt)))
     peaks_by_power = sorted(peaks, key=lambda x: abs(x[1]), reverse=True)
 
-    peaks = [(f, p) for f, p, _ in peaks_by_power[:n]]
+    peaks = [(f, p) for f, p, _ in peaks_by_power[:n] if abs(f - 50) > 1.0 ]
     return peaks
 
 
