@@ -1,84 +1,47 @@
-from time import sleep, time
 import numpy as np
+
+from time import sleep, time
 from reader import Reader
-from plotter import Plotter
-from scipy import signal
-from scipy.integrate import simps
+from frequency_selection import freq_peaks, map_peaks, periodogram
+from synthesizer import Synth
+import random
 
-sf = 200
-t_len = 1000
-t = np.arange(t_len) / sf
-
-
-def periodogram(u, t, n_win=4):
-    """ Returns the power spectral density for different
-        frequencies using welch method. """
-    win = int(t_len / n_win)
-    freqs, power = signal.welch(u, sf, nperseg=win)
-    return freqs, power
-
-
-def pad(u, n=256):
-    zeros = np.zeros(256)
-    return np.concatenate((zeros, u, zeros), axis=0)
-
-
-def relative_power(a, b, freqs, psd):
-    """
-    Computes the relative power of the signal between a hz and b hz.
-    """
-    dx = freqs[1] - freqs[0]
-
-    index = np.logical_and(freqs >= a, freqs <= b)
-    index_50_hz = np.logical_and(freqs >= 45, freqs <= 55)
-
-    ab_power = simps(psd[index], dx=dx)
-    total_power = simps(psd, dx=dx) - simps(psd[index_50_hz], dx=dx)
-    return round(ab_power / total_power, 3)
-
-def band_power(freqs, psd):
-    delta = relative_power(0.5, 3, freqs, psd)
-    theta = relative_power(3, 8, freqs, psd)
-    alpha = relative_power(8, 12, freqs, psd)
-    beta = relative_power(12, 38, freqs, psd)
-    gamma = relative_power(38, 42, freqs, psd)
-    return delta, theta, alpha, beta, gamma
-
-
-def heartrate(u, t):
-    freqs, psd = periodogram(u, t, 2)
-    index_max = np.argmax(psd)
-    return freqs[index_max]
+SF = 200
+T_LEN = 1000
 
 
 def main():
-    r = Reader(mac="e0:06:15:36:28:44", interface="udp")
+    synth = Synth()
+    r = Reader(mac="C4:A9:D2:20:3F:A1".lower(), interface="udp")
     r.start()
-    plot = Plotter()
-    [
-        plot.set_properties(n, x_label="f", y_label="V^2/Hz", x_lim=(0, 50))
-        for n in range(4)
-    ]
+    t = np.arange(T_LEN) / SF
 
-    while len(r.channels[0]) < t_len:
+    print("Waiting for data")
+    while len(r.channels[0]) < T_LEN:
         sleep(0.1)
 
+    synth.start()
+    f = 880
     while True:
-        for n in range(4):
-            u = r.channels[n][-t_len:]
-            freqs, psd = periodogram(u, t)
-            plot.add(freqs, psd, n)
-            # plot.add(t, u, n)
+        u = r.channels[0][-T_LEN:]
+        freqs, psd = periodogram(u, t)
+        peaks, _ = zip(*freq_peaks(freqs, psd, n=7))
+        peaks = map_peaks(peaks)
+        synth.play_freq(peaks[0:1], 2.0)
+        sleep(1.0)
+        synth.play_freq(peaks[1:3])
+        sleep(1.0)
+        synth.play_freq(peaks[2:4])
+        sleep(1.0)
+        synth.play_freq(peaks[4:5])
+        sleep(1.0)
 
-            rel_power = round(
-                relative_power(4, 8, freqs, psd), 3
-            )  # Power in theta range.
-            print(rel_power, " ", end="")
-            if n == 0:
-                print(heartrate(u, t), end="")
-        print()
-        plot.update_plot()
-        sleep(0.2)
+
+        # waves = synth.sound_waves(peaks)
+        # signal = synth.harmonize(waves)
+        # synth.play_signal(volume=0.5, signal=signal)
+        # sleep(synth.duration)
+
 
 
 if __name__ == "__main__":
