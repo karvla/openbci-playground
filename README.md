@@ -1,5 +1,5 @@
-openbci-playground
+Transanimus
 ==================
 
-Just me playing with an OpenBCI Ganglia board.
+An art projects that lets you listen to someones brainwaves.
 
