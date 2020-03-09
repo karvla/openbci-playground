@@ -1,18 +1,21 @@
 import numpy as np
-
 from time import sleep, time
 from reader import Reader
 from frequency_selection import freq_peaks, map_peaks, periodogram
 from synthesizer import Synth
 import random
+import click
 
 SF = 200
 T_LEN = 1000
 
 
-def main():
+@click.command()
+@click.option('--interface', default='udp', help='data interface, bt or udp')
+@click.option('--mac', default="", help='bluetooth mac-address of the EEG')
+def main(interface, mac):
     synth = Synth()
-    r = Reader(mac="C4:A9:D2:20:3F:A1".lower(), interface="udp")
+    r = Reader(mac=mac.lower(), interface=interface)
     r.start()
     t = np.arange(T_LEN) / SF
 
@@ -42,7 +45,6 @@ def main():
         # synth.play_signal(volume=0.5, signal=signal)
         # sleep(synth.duration)
 
-
-
 if __name__ == "__main__":
     main()
+
