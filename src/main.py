@@ -32,11 +32,11 @@ def main(interface, mac):
         peaks = map_peaks(peaks)
         synth.play_freq(peaks[0:1], 2.0)
         sleep(1.0)
-        synth.play_freq(peaks[1:3])
+        synth.play_freq(peaks[1:3], 0.5)
         sleep(1.0)
-        synth.play_freq(peaks[2:4])
+        synth.play_freq(peaks[2:4], 0.5)
         sleep(1.0)
-        synth.play_freq(peaks[4:5])
+        synth.play_freq(peaks[4:5], 0.5)
         sleep(1.0)
 
 

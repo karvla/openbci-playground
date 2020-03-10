@@ -26,7 +26,6 @@ class Synth(Thread):
         self.wave = self._sound_wave(440.0) / 1000
         #self.wave = np.zeros(self.duration*self.sf)
         self.mod_freq = False
-        print(self.wave.shape)
         
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=self.p.get_format_from_width(self.res),
@@ -49,12 +48,12 @@ class Synth(Thread):
 
         return (data.tobytes(), pyaudio.paContinue)
 
-    def play_freq(self, freqs, duration=0.5):
+    def play_freq(self, freqs, duration, amplitude=0.1):
         signals = self._sound_waves(freqs, duration)
         signal = self.harmonize(signals)
         signal = self.convolve(signal)
         signal = self.fade(signal)
-        signal = signal / np.max(np.abs(signal))
+        signal = self.set_amplitude(signal, amplitude)
         frame_end = self.window_idx*(self.frame_count+1)
         signal_end = frame_end + signal.shape[0]
         self.wave[frame_end:signal_end] += signal
@@ -79,6 +78,10 @@ class Synth(Thread):
 
         return signal
 
+    def set_amplitude(self, signal, amplitude):
+        return signal/np.max(np.abs(signal))*amplitude
+
+
     def modulate(self, freq):
         self.mod_freq = True
         self.freq = freq
@@ -98,10 +101,11 @@ class Synth(Thread):
 
     def _sound_waves(self, freqs, duration=None):
         " Returns a numpy array with containing waves with different frequencies. "
+        amplitude = 0.1
         if not duration:
             duration = self.duration
         t = np.arange(self.sf * duration) / self.sf
-        sine = lambda f : np.sin(2 * np.pi * f * t)
+        sine = lambda f : np.sin(2 * np.pi * f * t)*amplitude
         waves = list(map(sine, freqs))
         return np.array(waves)
 
