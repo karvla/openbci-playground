@@ -26,6 +26,7 @@ class Synth(Thread):
         self.wave = self._sound_wave(440.0) / 1000
         #self.wave = np.zeros(self.duration*self.sf)
         self.mod_freq = False
+        print(self.wave.shape)
         
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=self.p.get_format_from_width(self.res),
@@ -38,9 +39,14 @@ class Synth(Thread):
 
     def _callback(self, in_data, frame_count, time_info, status):
         data = self.wave[frame_count * self.window_idx : frame_count * (self.window_idx + 1)]
-
-
         self.window_idx += 1
+
+        # Rolling back the track every 100 frames
+        lim = 100
+        if self.window_idx == lim:
+            self.window_idx = 0
+            self.wave = np.roll(self.wave, -lim*frame_count)
+
         return (data.tobytes(), pyaudio.paContinue)
 
     def play_freq(self, freqs, duration=0.5):
@@ -49,7 +55,7 @@ class Synth(Thread):
         signal = self.convolve(signal)
         signal = self.fade(signal)
         signal = signal / np.max(np.abs(signal))
-        frame_end = self.window_idx*(self.frame_count+1)# - self.fade_len
+        frame_end = self.window_idx*(self.frame_count+1)
         signal_end = frame_end + signal.shape[0]
         self.wave[frame_end:signal_end] += signal
 
