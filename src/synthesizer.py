@@ -17,13 +17,13 @@ class Synth(Thread):
         self.has_changed = False
         self.duration = 100
         self.sf = 44100
-        self.fade_len = 5000
+        self.fade_len = 8000
         self.atack = -10.0
         self.res = 4
         self.window_idx = 0
         self.frame_count = 4096
         self.freq = 440.0
-        self.wave = self._sound_wave(440.0) / 1000
+        self.wave = self._sound_wave(440.0) / 10000
         #self.wave = np.zeros(self.duration*self.sf)
         self.mod_freq = False
         
@@ -51,8 +51,8 @@ class Synth(Thread):
     def play_freq(self, freqs, duration, amplitude=0.1):
         signals = self._sound_waves(freqs, duration)
         signal = self.harmonize(signals)
-        signal = self.convolve(signal)
         signal = self.fade(signal)
+        signal = self.convolve(signal)
         signal = self.set_amplitude(signal, amplitude)
         frame_end = self.window_idx*(self.frame_count+1)
         signal_end = frame_end + signal.shape[0]

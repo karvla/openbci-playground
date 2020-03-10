@@ -6,9 +6,20 @@ from scipy import signal
 from scipy.integrate import simps
 
 
+from time import time
 def map_peaks(peaks):
     """ Maps peaks to be in an audible range """
-    return [20 + 30 * peak for peak in peaks]
+
+    t0 = time()
+    pentagon = [1/1, 32/27, 4/3, 3/2, 16/9]
+    scale = []
+    for n in range(1, 50):
+        scale += [i*n for i in pentagon]
+
+    peaks = np.array(scale)[np.int16(peaks)]*50
+    peaks += np.random.random(peaks.shape)
+    return peaks
+    
 
 
 def periodogram(u, t, n_win=4):
