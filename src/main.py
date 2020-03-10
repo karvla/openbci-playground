@@ -3,7 +3,7 @@ from time import sleep, time
 from reader import Reader
 from frequency_selection import freq_peaks, map_peaks, periodogram
 from synthesizer import Synth
-import random
+from random import random
 import click
 
 SF = 200
@@ -30,11 +30,13 @@ def main(interface, mac):
         freqs, psd = periodogram(u, t)
         peaks, _ = zip(*freq_peaks(freqs, psd, n=7))
         peaks = map_peaks(peaks)
-        synth.play_freq(peaks[0:2], 1.0)
+        synth.play_freq(peaks[0:2], random(), random()*0.2)
         sleep(1)
-        synth.play_freq(peaks[3:4], 0.5)
+        synth.play_freq(peaks[3:4], random(), random()*0.2)
         sleep(1)
-        synth.play_freq(peaks[2:3], 0.5)
+        synth.play_freq(peaks[2:3], random(), random()*0.2)
+        sleep(1)
+        synth.play_freq(peaks[2:3], random(), random()*0.2)
 
         #synth.play_freq(peaks[0:1], 2.0)
         #sleep(1.0)
