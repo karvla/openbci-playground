@@ -1,13 +1,13 @@
 import pyaudio
 import numpy as np
-
 from time import sleep
 from functools import reduce
 from frequency_selection import freq_peaks
-
 from threading import Thread
 import scipy.io.wavfile
+from pathlib import Path
 
+impulse_resonse_fn = Path(__file__).parent.parent / "samples/1st_baptist_nashville_balcony.wav"
 
 class Synth(Thread):
 
@@ -72,9 +72,9 @@ class Synth(Thread):
         return signal
 
     def convolve(self, signal):
-        _, impulse_resonse = scipy.io.wavfile.read('./samples/1st_baptist_nashville_balcony.wav')
-        impulse_resonse = impulse_resonse[:,0]
-        signal = np.convolve(signal, impulse_resonse)
+        _, impulse_response = scipy.io.wavfile.read(impulse_resonse_fn)
+        impulse_response = impulse_response[:,0]
+        signal = np.convolve(signal, impulse_response)
 
         return signal
 
