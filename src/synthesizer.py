@@ -1,10 +1,11 @@
 import pyaudio
 import numpy as np
-from time import sleep
+from time import sleep, time
 from functools import reduce
 from frequency_selection import freq_peaks
 from threading import Thread
 import scipy.io.wavfile
+from scipy import signal as scisig
 from pathlib import Path
 
 impulse_resonse_fn = Path(__file__).parent.parent / "samples/1st_baptist_nashville_balcony.wav"
@@ -17,14 +18,12 @@ class Synth(Thread):
         self.has_changed = False
         self.duration = 100
         self.sf = 44100
-        self.fade_len = 5000
         self.atack = -10.0
         self.res = 4
         self.window_idx = 0
         self.frame_count = 4096
         self.freq = 440.0
-        self.wave = self._sound_wave(440.0) / 1000
-        #self.wave = np.zeros(self.duration*self.sf)
+        self.wave = self._sound_wave(440.0) / 10000
         self.mod_freq = False
         
         self.p = pyaudio.PyAudio()
@@ -49,8 +48,10 @@ class Synth(Thread):
         return (data.tobytes(), pyaudio.paContinue)
 
     def play_freq(self, freqs, duration, amplitude=0.1):
+        t0 = time() 
         signals = self._sound_waves(freqs, duration)
         signal = self.harmonize(signals)
+        signal = self.fade(signal)
         signal = self.convolve(signal)
         signal = self.fade(signal)
         signal = self.set_amplitude(signal, amplitude)
@@ -59,22 +60,23 @@ class Synth(Thread):
         self.wave[frame_end:signal_end] += signal
 
     def fade(self, signal):
-        t1 = np.arange(-self.fade_len/2, self.fade_len/2) / ((self.fade_len)/2)
+        fade_len = int(signal.shape[0]*0.1)
+        t1 = np.arange(-fade_len/2, fade_len/2) / ((fade_len)/2)
         a1 = 1 / (1 + np.exp(-10 * t1))
         a2 = 1 / (1 + np.exp(10 * t1))
 
         t2 = np.arange(-signal.shape[0]/2, signal.shape[0]/2) / ((signal.shape[0])/2)
         
-        signal[:self.fade_len] = a1 * signal[:self.fade_len]
+        signal[:fade_len] = a1 * signal[:fade_len]
 
-        signal[-self.fade_len:] = a2 * signal[-self.fade_len:]
+        signal[-fade_len:] = a2 * signal[-fade_len:]
 
         return signal
 
     def convolve(self, signal):
         _, impulse_response = scipy.io.wavfile.read(impulse_resonse_fn)
         impulse_response = impulse_response[:,0]
-        signal = np.convolve(signal, impulse_response)
+        signal = scisig.convolve(signal, impulse_response, method='fft')
 
         return signal
 
