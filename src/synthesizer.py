@@ -8,7 +8,7 @@ import scipy.io.wavfile
 from scipy import signal as scisig
 from pathlib import Path
 
-impulse_resonse_fn = Path(__file__).parent.parent / "samples/1st_baptist_nashville_balcony.wav"
+samples = Path(__file__).parent.parent / "samples/"
 
 class Synth(Thread):
 
@@ -55,6 +55,19 @@ class Synth(Thread):
         signal = self.convolve(signal)
         signal = self.fade(signal)
         signal = self.set_amplitude(signal, amplitude)
+        self._add_to_track(signal)
+
+    def play_sample(self, sample, amplitude=0.1):
+        t0 = time() 
+        _, sample = scipy.io.wavfile.read(sample)
+        sample = self.set_amplitude(sample, amplitude)
+        self._add_to_track(sample)
+
+    def play_heartbeat(self):
+        heart_beat_fn = Path(__file__).parent.parent / "samples/heartbeat-single.wav"
+        self.play_sample(heart_beat_fn)
+
+    def _add_to_track(self, signal):
         frame_end = self.window_idx*(self.frame_count+1)
         signal_end = frame_end + signal.shape[0]
         self.wave[frame_end:signal_end] += signal
@@ -74,7 +87,7 @@ class Synth(Thread):
         return signal
 
     def convolve(self, signal):
-        _, impulse_response = scipy.io.wavfile.read(impulse_resonse_fn)
+        _, impulse_response = scipy.io.wavfile.read(samples / "1st_baptist_nashville_balcony.wav")
         impulse_response = impulse_response[:,0]
         signal = scisig.convolve(signal, impulse_response, method='fft')
 
