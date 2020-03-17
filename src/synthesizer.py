@@ -63,7 +63,7 @@ class Synth(Thread):
         sample = self.set_amplitude(sample, amplitude)
         self._add_to_track(sample)
 
-    def play_heartbeat(self):
+    def play_heartbeat(self, amplitude=0.6):
         heart_beat_fn = Path(__file__).parent.parent / "samples/heartbeat-single.wav"
         self.play_sample(heart_beat_fn)
 
