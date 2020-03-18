@@ -4,43 +4,40 @@ from reader import Reader
 from frequency_selection import freq_peaks, map_peaks, periodogram
 from synthesizer import Synth
 from random import random
-from pulsereader import await_heartbeat
+from pulsereader import Heartbeat
 import click
 import asyncio
 
 SF = 200
 T_LEN = 1000
- 
+T = np.arange(T_LEN) / SF
+
 
 @click.command()
-@click.option('--interface', default='udp', help='data interface, bt or udp')
-@click.option('--mac', default="", help='bluetooth mac-address of the EEG')
-def main(interface, mac):
+@click.option("--interface", default="udp", help="data interface, bt or udp")
+@click.option("--mac", default="", help="bluetooth mac-address of the EEG")
+@click.option("--pulsedev", default="", help="device for reading pulse")
+def main(interface, mac, pulsedev):
     synth = Synth()
-    r = Reader(mac=mac.lower(), interface=interface)
-    r.start()
-    t = np.arange(T_LEN) / SF
+    reader = Reader(mac=mac.lower(), interface=interface)
+    reader.start()
+    synth.start()
 
-    print("Waiting for data")
-    while len(r.channels[0]) < T_LEN:
+    if pulsedev:
+        heartbeat = Heartbeat(dev=pulsedev, synth=synth)
+        heartbeat.start()
+
+    while reader.waiting_for_data():
         sleep(0.1)
 
-    synth.start()
-    f = 880
-    
-    async def play():
-        while True:
-            u = r.channels[0][-T_LEN:]
-            freqs, psd = periodogram(u, t)
-            peaks, _ = zip(*freq_peaks(freqs, psd, n=7))
-            peaks = map_peaks(peaks)
-            await asyncio.wait_for(await_heartbeat(), timeout=1.0)
-            synth.play_heartbeat()
-            synth.play_freq(peaks[0:2], 0.15, random()*0.5)
-
-    asyncio.run(play())
+    while True:
+        u = reader.latest_data()[0]
+        freqs, psd = periodogram(u, T)
+        peaks, _ = zip(*freq_peaks(freqs, psd, n=7))
+        peaks = map_peaks(peaks)
+        synth.play_freq([peaks[0]], 0.15, random() * 0.5)
+        sleep(1.0)
 
 
 if __name__ == "__main__":
     main()
-

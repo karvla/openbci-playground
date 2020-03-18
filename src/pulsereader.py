@@ -1,11 +1,21 @@
 from time import sleep
 from serial import Serial
+import threading
 
-ser = Serial('/dev/ttyUSB0', 9600) # Establish the connection on a specific port
+class Heartbeat(threading.Thread):
+    def __init__(self, dev, synth, baudrate=9600):
+        super(Heartbeat, self).__init__()
+        self.reader = Serial(dev, 9600)
+        self.synth = synth
 
-# TODO: use pyserial-asyncio
-async def await_heartbeat():
-    ser.readline()
+    def run(self):
+        while True:
+            self.await_heartbeat()
+            self.synth.play_heartbeat()
+
+    def await_heartbeat(self):
+        self.reader.readline()
+        return True
 
 if __name__ == '__main__':
     while True:
