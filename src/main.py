@@ -6,7 +6,6 @@ from synthesizer import Synth
 from random import random
 from pulsereader import Heartbeat
 import click
-import asyncio
 
 SF = 200
 T_LEN = 1000
