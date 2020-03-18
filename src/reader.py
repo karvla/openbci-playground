@@ -10,6 +10,7 @@ class Reader(threading.Thread):
         self.channels = [[], [], [], []]
         self.mac = kwargs.get("mac", None)
         self.interface = kwargs.get("interface", "bt")
+        self.t_len = kwargs.get("t_len", 1000)
 
     def run(self):
         if self.interface == "bt":
@@ -26,6 +27,12 @@ class Reader(threading.Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.bind((UDP_IP, UDP_PORT))
             self._read_udp(sock)
+
+    def latest_data(self):
+        return list(map(lambda c: c[-self.t_len:], self.channels))
+
+    def waiting_for_data(self):
+        return len(self.channels[0]) < self.t_len
 
     def _values_to_volts(self, values):
         VOLTS_PER_COUNT = 1.2 * 8388607.0 * 1.5 * 51.0
