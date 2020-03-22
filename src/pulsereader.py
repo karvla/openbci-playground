@@ -2,6 +2,7 @@ from time import sleep
 from serial import Serial
 import threading
 from synthesizer import Synth
+import click
 
 class Heartbeat(threading.Thread):
     def __init__(self, dev, synth, baudrate=9600):
@@ -20,7 +21,14 @@ class Heartbeat(threading.Thread):
         print(int(line))
         return True
 
-if __name__ == '__main__':
+
+@click.command()
+@click.option("--dev", help="which device to read serial data from")
+def main(dev):
     synth = Synth()
-    hb = Heartbeat('/dev/cu.usbmodem1421',synth)
+    hb = Heartbeat(dev, synth)
     hb.start()
+
+
+if __name__ == '__main__':
+    main()
