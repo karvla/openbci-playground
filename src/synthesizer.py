@@ -6,6 +6,7 @@ from frequency_selection import freq_peaks
 from threading import Thread
 import scipy.io.wavfile
 from scipy import signal as scisig
+from scipy.ndimage.interpolation import shift
 from pathlib import Path
 
 samples = Path(__file__).parent.parent / "samples/"
@@ -44,6 +45,8 @@ class Synth(Thread):
         if self.window_idx == lim:
             self.window_idx = 0
             self.wave = np.roll(self.wave, -lim*frame_count)
+            self.wave[-lim*frame_count:] = np.random.rand(lim*frame_count) / 10000
+
 
         return (data.tobytes(), pyaudio.paContinue)
 

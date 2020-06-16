@@ -46,7 +46,9 @@ def main(interface, mac, pulsedev):
                 print("Selected frequecies", [round(peak) for peak in peaks])
                 peaks = [peak * 8 + 200 for peak in peaks]
                 power = [p * 1e6 for p in power]
-                synth.play_freq(peaks, 0.15, theta**2)
+                synth.play_freq(peaks, theta, theta**2)
+            else:
+                print("Skipped")
         sleep(1/theta/5)
 
 
