@@ -10,18 +10,15 @@ from time import time
 def map_peaks(peaks):
     """ Maps peaks to be in an audible range """
 
-    t0 = time()
     pentagon = [1/1, 32/27, 4/3, 3/2, 16/9]
     scale = []
     for n in range(1, 50):
         scale += [i*n for i in pentagon]
 
-    peaks = np.array(scale)[np.int16(peaks)]*50
+    peaks = np.array(scale)[np.int16(peaks)]*50 + 440
     peaks += np.random.random(peaks.shape)
     return peaks
     
-
-
 def periodogram(u, t, n_win=4):
     """ Returns the power spectral density for different
         frequencies using welch method. """
@@ -43,7 +40,7 @@ def relative_power(a, b, freqs, psd):
     dx = freqs[1] - freqs[0]
 
     index = np.logical_and(freqs >= a, freqs <= b)
-    index_50_hz = np.logical_and(freqs >= 45, freqs <= 55)
+    index_50_hz = np.logical_and(freqs >= 40, freqs <= 60)
 
     ab_power = simps(psd[index], dx=dx)
     total_power = simps(psd, dx=dx) - simps(psd[index_50_hz], dx=dx)
@@ -71,7 +68,7 @@ def freq_peaks(freqs, power, n=1):
     peaks = list(filter(lambda x: abs(x[2]) < 0.05, zip(freqs, power, power_dt)))
     peaks_by_power = sorted(peaks, key=lambda x: abs(x[1]), reverse=True)
 
-    peaks = [(f, p) for f, p, _ in peaks_by_power[:n] if abs(f - 50) > 1.0]
+    peaks = [(f, p) for f, p, _ in peaks_by_power[:n]]
     return peaks
 
 

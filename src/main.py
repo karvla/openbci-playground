@@ -1,7 +1,7 @@
 import numpy as np
 from time import sleep, time
 from reader import Reader
-from frequency_selection import freq_peaks, map_peaks, periodogram
+from frequency_selection import freq_peaks, map_peaks, periodogram, band_power
 from synthesizer import Synth
 from random import random
 from pulsereader import Heartbeat
@@ -30,12 +30,24 @@ def main(interface, mac, pulsedev):
         sleep(0.1)
 
     while True:
-        u = reader.latest_data()[0]
-        freqs, psd = periodogram(u, T)
-        peaks, _ = zip(*freq_peaks(freqs, psd, n=7))
-        peaks = map_peaks(peaks)
-        synth.play_freq([peaks[0]], 0.15, random() * 0.5)
-        sleep(1.0)
+        for u in reader.latest_data()[:2]:
+            freqs, psd = periodogram(u, T)
+            _, theta, _, _, _ = band_power(freqs, psd)
+
+            peaks_power = freq_peaks(freqs, psd, n=14)
+            peaks_power = [
+                (peak, power)
+                for peak, power in peaks_power
+                if peak > 4.0 and abs(50 - peak) > 3
+            ]
+            if peaks_power:
+                peaks, power = zip(*peaks_power)
+                print("Theta power", theta)
+                print("Selected frequecies", [round(peak) for peak in peaks])
+                peaks = [peak * 8 + 200 for peak in peaks]
+                power = [p * 1e6 for p in power]
+                synth.play_freq(peaks, 0.15, theta**2)
+        sleep(1/theta/5)
 
 
 if __name__ == "__main__":
